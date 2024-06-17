@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2; 
+            margin: 0;
+            padding: 0;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; 
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        #chatbox {
+            max-width: 500px;
+            margin: 20px auto;
+            background-color: rgba(255, 255, 255, 0.8); 
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #messages {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            padding: 8px 12px;
+            margin: 5px;
+            border-radius: 6px;
+            clear: both;
+            display: inline-block;
+            max-width: 70%;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: #fff;
+            float: right;
+            text-align: right;
+        }
+
+        .bot-message {
+            background-color: #28a745;
+            color: #fff;
+            float: left;
+            text-align: left;
+        }
+
+        #userInput {
+            width: calc(100% - 70px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        #sendButton {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Welcome to the E-commerce Chatbot</h1>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+        <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        console.log("Loading HTML...");
+
+        const socket = new WebSocket(`ws://localhost:8000/ws`);
+        console.log("WebSocket connected:", socket.readyState);
+
+        socket.onmessage = function(event) {
+            try{
+                const data = JSON.parse(event.data);
+                const messages = document.getElementById('messages');
+                const messageContainer = document.createElement('div');
+                messageContainer.classList.add('message');
+                const role = data.role.charAt(0).toUpperCase() + data.role.slice(1); 
+                messageContainer.innerText = `${role}: ${data.content}`;
+                messages.appendChild(messageContainer);
+            } catch (error) {
+                console.error("Error while parsing message data:", error);
+            }
+
+        };
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value.trim();
+            const messages = document.getElementById('messages');
+
+            if (userInput === '') {
+                return;
+            }
+
+            const userMessageContainer = document.createElement('div');
+            userMessageContainer.classList.add('message', 'user-message');
+            userMessageContainer.innerText = `You: ${userInput}`;
+            messages.appendChild(userMessageContainer);
+            socket.send(JSON.stringify({ message: userInput }));
+            document.getElementById('userInput').value = '';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
